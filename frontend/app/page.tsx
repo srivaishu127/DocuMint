@@ -6,6 +6,10 @@ import AddFolderModal from './components/AddFolderModal'
 import AddDocumentModal from './components/AddDocumentModal'
 import DeleteConfirmModal from './components/DeleteConfirmModal'
 
+// Main Page Component
+// Document management interface with folder navigation, search, sorting, and pagination
+// Root folder (ID=1) is hidden from UI but serves as the default container
+
 const API_URL = 'http://localhost:3001/api'
 
 interface Folder {
@@ -141,7 +145,7 @@ export default function Home() {
       // Refresh data after deletion
       if (deleteTarget.type === 'folder') {
         fetchFolders()
-        // If we deleted the current folder, go back to root
+        // Navigate back to root if we deleted the currently open folder
         if (currentFolderId === deleteTarget.id) {
           setCurrentFolderId(null)
           fetchDocuments()
@@ -172,6 +176,7 @@ export default function Home() {
   }
 
   // Show folders only at root level, documents only when inside a folder
+  // Root folder (ID=1) is excluded from display
   let allItems = currentFolderId === null
     ? [
         ...folders.filter(f => f.id !== 1).map(f => ({ ...f, type: 'folder' })),
@@ -179,7 +184,7 @@ export default function Home() {
       ]
     : [...documents.map(d => ({ ...d, type: 'document' }))]
 
-  // Apply search filter - search across ALL folders and documents
+  // Apply search filter - search across ALL folders and documents globally
   if (searchQuery.trim().length > 0) {
     const query = searchQuery.toLowerCase().trim()
     // Search in all folders (except Root)

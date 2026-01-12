@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 
+// AddFolderModal Component
+// Simple form modal for creating new folders
+// Auto-assigns created_by as "Evelyn Blue" (hardcoded demo user)
+
 interface AddFolderModalProps {
   isOpen: boolean
   onClose: () => void

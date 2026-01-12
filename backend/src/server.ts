@@ -1,3 +1,7 @@
+// Express Server Entry Point
+// Configures middleware, routes, and starts the HTTP server
+// Database connection is tested on startup via config/database.ts
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,12 +13,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware: CORS for frontend access, JSON/URL-encoded body parsing
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//Health check endpoint -> Verify server is running.
-
+// Health check endpoint - returns API metadata and available endpoints
 app.get('/', (req: Request, res: Response) => {
   res.json({ 
     message: 'Documents Management API',
@@ -27,12 +31,11 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-//API Routes
-
+// API Routes
 app.use('/api/folders', folderRoutes);
 app.use('/api/documents', documentRoutes);
 
-//Start Server
+// Start server and log endpoints
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

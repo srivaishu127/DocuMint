@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 
+// DeleteConfirmModal Component
+// Confirmation dialog for delete operations
+// Warns users about CASCADE delete when deleting folders (all child documents will be removed)
+
 interface DeleteConfirmModalProps {
   isOpen: boolean
   onClose: () => void
