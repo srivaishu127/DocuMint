@@ -349,16 +349,10 @@ For detailed architecture documentation, see:
 1. View folders at root level
 2. Click a folder to see its documents
 3. Create a new folder using "+ Add new folder"
-4. Create a new document using "📤 Upload files"
+4. Create a new document using "Upload files"
 5. Search for documents using the search bar
 6. Navigate back to root using "← Back" button
 
 ---
 
-## Support
-
-For questions or issues, please refer to the code comments or contact the development team.
-
----
-
-**Built with care using enterprise-level best practices**
+**Built with ❤️ using enterprise-level best practices**
