@@ -130,45 +130,75 @@ Open your browser and navigate to: **http://localhost:3000**
 
 ## 💾 Database Setup
 
-### Database Schema
+### Prerequisites
+- **MySQL 8+** installed and running
+- MySQL running on **port 3300** (default setup)
+- MySQL root user access
 
-**Folders Table:**
-```sql
-CREATE TABLE folders (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  created_by VARCHAR(255) NOT NULL DEFAULT 'Unknown',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_name (name)
-);
+### Setup Instructions
+
+#### Step 1: Install MySQL (if not already installed)
+- Download from [MySQL Community Server](https://dev.mysql.com/downloads/mysql/)
+- During installation, set a root password (you'll need this later)
+- Verify MySQL is running on port 3300
+
+#### Step 2: Run the Database Script
+
+**Option A: Using MySQL Workbench (Recommended)**
+1. Open MySQL Workbench
+2. Connect to your local MySQL server (localhost:3300)
+3. Open the `database.sql` file from the project root directory
+4. Click the lightning bolt icon (⚡) or press `Ctrl+Shift+Enter` to execute
+5. Verify success in the Output panel
+
+**Option B: Using Command Line**
+```bash
+mysql -u root -p -P 3300 < database.sql
 ```
+Enter your MySQL root password when prompted.
 
-**Documents Table:**
-```sql
-CREATE TABLE documents (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  folder_id INT NOT NULL,
-  file_type VARCHAR(50) NOT NULL,
-  size INT NOT NULL COMMENT 'File size in bytes',
-  created_by VARCHAR(255) NOT NULL DEFAULT 'Unknown',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE,
-  INDEX idx_folder_id (folder_id),
-  INDEX idx_name (name)
-);
-```
+#### Step 3: Configure Backend Environment
+1. Navigate to the `backend` folder
+2. Create a `.env` file by copying `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `.env` and update the database password:
+   ```
+   DB_PASSWORD=your_actual_mysql_password
+   ```
+4. Verify other settings match your MySQL configuration:
+   ```
+   DB_HOST=localhost
+   DB_PORT=3300
+   DB_USER=root
+   DB_NAME=documents_management
+   ```
 
-### Sample Data
-The `database.sql` script includes sample data:
-- 4 folders (Root [ID=1, hidden], Projects, Reports, Invoices)
-- 7 documents across different folders
+#### Step 4: Verify Database Setup
+After running the script, your database should contain:
+- **Database**: `documents_management`
+- **Tables**: `folders` and `documents` (with foreign key relationships)
+- **Sample Data**: 4 folders and 13 sample documents
 
-**Important Notes:**
-- **Folder ID 1 (Root)**: Reserved for root-level documents. This folder is hidden in the UI. Documents with `folder_id = 1` appear at the root level alongside other folders.
-- At root level, you can see both folders (except Root) and root-level documents
-- Click a folder to see documents inside that specific folder
-- Documents can be added at root level or inside any folder
+You can verify in MySQL Workbench by checking the `documents_management` schema in the left panel.
+
+### Database Structure
+- **Folders table**: Stores folder information with auto-incrementing IDs
+- **Documents table**: Stores document metadata with foreign key to folders
+- **Root folder (ID=1)**: Special hidden folder for root-level documents
+- **Cascade delete**: Deleting a folder automatically deletes its documents
+
+### Troubleshooting
+- **Connection failed**: Ensure MySQL service is running
+- **Access denied**: Check username/password in `.env` file
+- **Port error**: Verify MySQL is running on port 3300 (check MySQL Workbench connection)
+- **Database exists**: Safe to re-run - script uses `CREATE IF NOT EXISTS`
+
+### Important Notes
+- **Never commit `.env` file** - it contains sensitive database credentials
+- Root folder (ID=1) is hidden in UI but stores root-level documents
+- All tables use UTF-8 encoding for international character support
 
 ---
 
