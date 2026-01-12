@@ -102,6 +102,9 @@ This creates:
 - Tables: `folders`, `documents`
 - Sample data with 4 folders and 7 documents
 
+Create a .env file in the backend directory and copy contents of .env.example
+- replace port number and password with your sql details.
+
 ### 2. Backend Setup
 
 ```bash
