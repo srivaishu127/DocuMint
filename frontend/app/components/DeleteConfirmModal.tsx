@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 
+// DeleteConfirmModal Component
+// Confirmation dialog for delete operations
+// Warns users about CASCADE delete when deleting folders (all child documents will be removed)
+
 interface DeleteConfirmModalProps {
   isOpen: boolean
   onClose: () => void
@@ -46,11 +50,13 @@ export default function DeleteConfirmModal({
             Are you sure you want to delete this {itemType}?
           </p>
           <div className="delete-item-name">
+            {itemType === 'folder' && <img src="/folder.png" alt="Folder" className="delete-item-icon" />}
+            {itemType === 'document' && <img src="/doc.png" alt="Document" className="delete-item-icon" />}
             {itemName}
           </div>
           {itemType === 'folder' && (
             <p className="delete-cascade-warning">
-              ⚠️ This will also delete all documents inside this folder.
+              This will also delete all documents inside this folder.
             </p>
           )}
         </div>

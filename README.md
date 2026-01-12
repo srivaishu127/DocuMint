@@ -130,45 +130,75 @@ Open your browser and navigate to: **http://localhost:3000**
 
 ## 💾 Database Setup
 
-### Database Schema
+### Prerequisites
+- **MySQL 8+** installed and running
+- MySQL running on **port 3300** (default setup)
+- MySQL root user access
 
-**Folders Table:**
-```sql
-CREATE TABLE folders (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  created_by VARCHAR(255) NOT NULL DEFAULT 'Unknown',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_name (name)
-);
+### Setup Instructions
+
+#### Step 1: Install MySQL (if not already installed)
+- Download from [MySQL Community Server](https://dev.mysql.com/downloads/mysql/)
+- During installation, set a root password (you'll need this later)
+- Verify MySQL is running on port 3300
+
+#### Step 2: Run the Database Script
+
+**Option A: Using MySQL Workbench (Recommended)**
+1. Open MySQL Workbench
+2. Connect to your local MySQL server (localhost:3300)
+3. Open the `database.sql` file from the project root directory
+4. Click the lightning bolt icon (⚡) or press `Ctrl+Shift+Enter` to execute
+5. Verify success in the Output panel
+
+**Option B: Using Command Line**
+```bash
+mysql -u root -p -P 3300 < database.sql
 ```
+Enter your MySQL root password when prompted.
 
-**Documents Table:**
-```sql
-CREATE TABLE documents (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  folder_id INT NOT NULL,
-  file_type VARCHAR(50) NOT NULL,
-  size INT NOT NULL COMMENT 'File size in bytes',
-  created_by VARCHAR(255) NOT NULL DEFAULT 'Unknown',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE,
-  INDEX idx_folder_id (folder_id),
-  INDEX idx_name (name)
-);
-```
+#### Step 3: Configure Backend Environment
+1. Navigate to the `backend` folder
+2. Create a `.env` file by copying `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `.env` and update the database password:
+   ```
+   DB_PASSWORD=your_actual_mysql_password
+   ```
+4. Verify other settings match your MySQL configuration:
+   ```
+   DB_HOST=localhost
+   DB_PORT=3300
+   DB_USER=root
+   DB_NAME=documents_management
+   ```
 
-### Sample Data
-The `database.sql` script includes sample data:
-- 4 folders (Root [ID=1, hidden], Projects, Reports, Invoices)
-- 7 documents across different folders
+#### Step 4: Verify Database Setup
+After running the script, your database should contain:
+- **Database**: `documents_management`
+- **Tables**: `folders` and `documents` (with foreign key relationships)
+- **Sample Data**: 4 folders and 13 sample documents
 
-**Important Notes:**
-- **Folder ID 1 (Root)**: Reserved for root-level documents. This folder is hidden in the UI. Documents with `folder_id = 1` appear at the root level alongside other folders.
-- At root level, you can see both folders (except Root) and root-level documents
-- Click a folder to see documents inside that specific folder
-- Documents can be added at root level or inside any folder
+You can verify in MySQL Workbench by checking the `documents_management` schema in the left panel.
+
+### Database Structure
+- **Folders table**: Stores folder information with auto-incrementing IDs
+- **Documents table**: Stores document metadata with foreign key to folders
+- **Root folder (ID=1)**: Special hidden folder for root-level documents
+- **Cascade delete**: Deleting a folder automatically deletes its documents
+
+### Troubleshooting
+- **Connection failed**: Ensure MySQL service is running
+- **Access denied**: Check username/password in `.env` file
+- **Port error**: Verify MySQL is running on port 3300 (check MySQL Workbench connection)
+- **Database exists**: Safe to re-run - script uses `CREATE IF NOT EXISTS`
+
+### Important Notes
+- **Never commit `.env` file** - it contains sensitive database credentials
+- Root folder (ID=1) is hidden in UI but stores root-level documents
+- All tables use UTF-8 encoding for international character support
 
 ---
 
@@ -179,94 +209,100 @@ The `database.sql` script includes sample data:
 http://localhost:3001/api
 ```
 
-### Endpoints
+### Folder Endpoints
 
-#### Folders
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| GET | `/folders` | Retrieve all folders | None |
+| POST | `/folders` | Create a new folder | `{ name, created_by }` |
 
-**GET /folders**
-- Description: Get all folders
-- Response: Array of folder objects
+### Document Endpoints
 
-**POST /folders**
-- Description: Create a new folder
-- Body:
-  ```json
-  {
-    "name": "Folder Name",
-    "created_by": "User Name" // optional
-  }
-  ```
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| GET | `/documents` | Retrieve all documents | None |
+| GET | `/documents/folder/:id` | Get documents in a specific folder | None |
+| GET | `/documents/search?query=` | Search documents by name (min 2 chars) | None |
+| POST | `/documents` | Create a new document | `{ name, folder_id, file_type, size, created_by }` |
 
-#### Documents
+### Example Request
 
-**GET /documents**
-- Description: Get all documents
-- Response: Array of document objects
+**Create a Document:**
+```bash
+POST http://localhost:3001/api/documents
+Content-Type: application/json
 
-**GET /documents/folder/:id**
-- Description: Get all documents in a specific folder
-- Response: Array of document objects
+{
+  "name": "Project_Plan.pdf",
+  "folder_id": 2,
+  "file_type": "pdf",
+  "size": 2048,
+  "created_by": "John Doe"
+}
+```
 
-**POST /documents**
-- Description: Create a new document
-- Body:
-  ```json
-  {
-    "name": "Document.pdf",
-    "folder_id": 1,
-    "file_type": "pdf",
-    "size": 2048,
-    "created_by": "User Name" // optional
-  }
-  ```
+**Response:** Returns the created document object with generated ID and timestamp.
 
-**GET /documents/search?query=searchterm**
-- Description: Search documents by name (min 2 characters)
-- Response: Array of matching document objects
+For detailed API documentation with examples and response schemas, see [`md files/API_DOCUMENTATION.md`](md%20files/API_DOCUMENTATION.md).
 
 ---
 
 ## 🏗️ Architecture
 
-### Backend Architecture (4-Layer Pattern)
+### Backend: 4-Layer Pattern
+
+The backend follows enterprise-level architecture with clear separation of concerns:
 
 ```
-HTTP Request
-    ↓
-Controller Layer    - Handles HTTP requests/responses
-    ↓
-Service Layer       - Business logic and validation
-    ↓
-DAO Layer          - Database operations
-    ↓
-Mapper Layer       - SQL query definitions
-    ↓
-Database (MySQL)
+┌─────────────────────────────────────┐
+│     Controller Layer                │  ← HTTP request/response handling
+│  (documentController.ts)            │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│     Service Layer                   │  ← Business logic & validation
+│  (documentService.ts)               │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│     DAO Layer                       │  ← Database operations
+│  (documentDAO.ts)                   │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│     Mapper Layer                    │  ← SQL query definitions
+│  (documentMapper.ts)                │
+└──────────────┬──────────────────────┘
+               ↓
+         MySQL Database
 ```
 
-**Benefits:**
-- Separation of concerns
-- Easy to test and maintain
-- Scalable and modular
-- Clear responsibility boundaries
+**Key Benefits:**
+- ✅ Separation of concerns - each layer has a single responsibility
+- ✅ Testability - layers can be tested independently
+- ✅ Maintainability - changes isolated to specific layers
+- ✅ Scalability - easy to extend with new features
 
-### Frontend Architecture
+### Frontend: Component-Based Architecture
+
+Built with Next.js 14 and React 18, following modern React patterns:
+
+- **Component-based UI** - Reusable modal components (`AddFolderModal`, `AddDocumentModal`)
+- **Server Components** - Optimized performance with Next.js App Router
+- **Type Safety** - Full TypeScript implementation
+- **SCSS Modules** - Scoped styling with professional design
+- **State Management** - React hooks for real-time UI updates
+
+### Data Flow
 
 ```
-Components/         - Reusable UI components (Modals)
-    ↓
-Pages/             - Main application views
-    ↓
-Styles/            - SCSS stylesheets
-    ↓
-API Calls          - Fetch data from backend
+User Action → Frontend Component → API Call → Backend Controller 
+→ Service Layer → DAO Layer → Mapper → Database → Response
 ```
 
-**Features:**
-- Component-based architecture
-- TypeScript for type safety
-- SCSS for maintainable styling
-- Real-time state management with React hooks
+For detailed architecture documentation, see:
+- [`md files/BACKEND_ARCHITECTURE.md`](md%20files/BACKEND_ARCHITECTURE.md) - In-depth backend design
+- [`md files/ARCHITECTURE.md`](md%20files/ARCHITECTURE.md) - Full system architecture
 
 ---
 

@@ -1,15 +1,21 @@
-﻿import type { Metadata } from 'next'
-import '../styles/globals.scss'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'DocuMint - Document Management System',
-  description: 'Enterprise document management solution',
-}
+import "../styles/globals.scss";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang='en'>
-      <body>{children}</body>
+    <html lang="en">
+      <head>
+        <title>DocuMint - Document Management</title>
+        <meta name="description" content="Professional document management system" />
+      </head>
+      <body>
+        {children}
+      </body>
     </html>
-  )
+  );
 }

@@ -1,25 +1,26 @@
+// MySQL Database Connection Pool
+// Uses connection pooling for better performance and resource management
+// Configuration loaded from .env for security
+
 import mysql from 'mysql2';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-//MySQL Database Connection Pool
-//Configuration is loaded from .env file for security.
-
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,       // Database server (localhost)
-  port: Number(process.env.DB_PORT) || 3306, // Database port (default 3306)
-  user: process.env.DB_USER,       // MySQL username (root)
-  password: process.env.DB_PASSWORD, // MySQL password
-  database: process.env.DB_NAME,   // Database name (documents_management)
-  waitForConnections: true,        
-  connectionLimit: 10,          
-  queueLimit: 0                
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,  // Max 10 concurrent connections
+  queueLimit: 0         // Unlimited queue                
 });
 
 const promisePool = pool.promise();
 
-//Test database connection on startup
+// Test database connection on startup and log result
 
 pool.getConnection((err, connection) => {
   if (err) {
@@ -30,7 +31,7 @@ pool.getConnection((err, connection) => {
     return;
   }
   console.log('✅ Database connected successfully');
-  connection.release(); // Return connection to pool
+  connection.release();
 });
 
 export default promisePool;
