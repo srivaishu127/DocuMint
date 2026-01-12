@@ -4,7 +4,7 @@ A professional full-stack document management system built with **Node.js**, **E
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Technology Stack](#technology-stack)
@@ -16,7 +16,7 @@ A professional full-stack document management system built with **Node.js**, **E
 
 ---
 
-## ✨ Features
+## Features
 
 - **Folder Management**: Create and organize folders
 - **Document Management**: Upload and manage documents with metadata
@@ -29,7 +29,7 @@ A professional full-stack document management system built with **Node.js**, **E
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - **Runtime**: Node.js v20.17.0
@@ -48,7 +48,7 @@ A professional full-stack document management system built with **Node.js**, **E
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 DocuMint/
@@ -82,7 +82,7 @@ DocuMint/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js v20+ installed
@@ -128,7 +128,7 @@ Open your browser and navigate to: **http://localhost:3000**
 
 ---
 
-## 💾 Database Setup
+## Database Setup
 
 ### Prerequisites
 - **MySQL 8+** installed and running
@@ -148,7 +148,7 @@ Open your browser and navigate to: **http://localhost:3000**
 1. Open MySQL Workbench
 2. Connect to your local MySQL server (localhost:3300)
 3. Open the `database.sql` file from the project root directory
-4. Click the lightning bolt icon (⚡) or press `Ctrl+Shift+Enter` to execute
+4. Click the lightning bolt icon or press `Ctrl+Shift+Enter` to execute
 5. Verify success in the Output panel
 
 **Option B: Using Command Line**
@@ -202,7 +202,7 @@ You can verify in MySQL Workbench by checking the `documents_management` schema 
 
 ---
 
-## 📡 API Documentation
+## API Documentation
 
 ### Base URL
 ```
@@ -247,7 +247,7 @@ For detailed API documentation with examples and response schemas, see [`md file
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend: 4-Layer Pattern
 
@@ -278,10 +278,10 @@ The backend follows enterprise-level architecture with clear separation of conce
 ```
 
 **Key Benefits:**
-- ✅ Separation of concerns - each layer has a single responsibility
-- ✅ Testability - layers can be tested independently
-- ✅ Maintainability - changes isolated to specific layers
-- ✅ Scalability - easy to extend with new features
+- Separation of concerns - each layer has a single responsibility
+- Testability - layers can be tested independently
+- Maintainability - changes isolated to specific layers
+- Scalability - easy to extend with new features
 
 ### Frontend: Component-Based Architecture
 
@@ -306,7 +306,7 @@ For detailed architecture documentation, see:
 
 ---
 
-## 🎨 UI Features
+## UI Features
 
 - **Professional Table Layout**: Clean, modern document/folder listing
 - **Modal Dialogs**: For creating folders and documents
@@ -319,28 +319,28 @@ For detailed architecture documentation, see:
 
 ---
 
-## 📝 Notes for Assessors
+## Notes for Assessors
 
 ### Code Quality
-- ✅ Enterprise-level 4-layer architecture
-- ✅ TypeScript throughout (strict typing)
-- ✅ Minimal, professional comments
-- ✅ Consistent code style
-- ✅ Error handling at all layers
-- ✅ Input validation (client + server)
+- Enterprise-level 4-layer architecture
+- TypeScript throughout (strict typing)
+- Minimal, professional comments
+- Consistent code style
+- Error handling at all layers
+- Input validation (client + server)
 
 ### Database
-- ✅ Proper foreign key relationships
-- ✅ CASCADE delete for data integrity
-- ✅ Indexed columns for performance
-- ✅ Sample data included
+- Proper foreign key relationships
+- CASCADE delete for data integrity
+- Indexed columns for performance
+- Sample data included
 
 ### Frontend
-- ✅ Component-based architecture
-- ✅ Clean SCSS (no Tailwind complexity)
-- ✅ Professional UI/UX
-- ✅ Real-time updates
-- ✅ Form validation with error messages
+- Component-based architecture
+- Clean SCSS (no Tailwind complexity)
+- Professional UI/UX
+- Real-time updates
+- Form validation with error messages
 
 ### Testing the Application
 1. View folders at root level
@@ -352,10 +352,10 @@ For detailed architecture documentation, see:
 
 ---
 
-## 📧 Support
+## Support
 
 For questions or issues, please refer to the code comments or contact the development team.
 
 ---
 
-**Built with ❤️ using enterprise-level best practices**
+**Built with care using enterprise-level best practices**

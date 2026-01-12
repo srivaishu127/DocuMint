@@ -41,6 +41,7 @@ export default function Home() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'folder' | 'document', id: number, name: string } | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null)
+  const [dateSortOrder, setDateSortOrder] = useState<'asc' | 'desc' | null>(null)
 
   useEffect(() => {
     fetchFolders()
@@ -173,6 +174,18 @@ export default function Home() {
     } else {
       setSortOrder(null)
     }
+    setDateSortOrder(null) // Reset date sort when name sort is active
+  }
+
+  const toggleDateSort = () => {
+    if (dateSortOrder === null) {
+      setDateSortOrder('asc')
+    } else if (dateSortOrder === 'asc') {
+      setDateSortOrder('desc')
+    } else {
+      setDateSortOrder(null)
+    }
+    setSortOrder(null) // Reset name sort when date sort is active
   }
 
   // Show folders only at root level, documents only when inside a folder
@@ -214,6 +227,19 @@ export default function Home() {
         return nameA < nameB ? -1 : nameA > nameB ? 1 : 0
       } else {
         return nameA > nameB ? -1 : nameA < nameB ? 1 : 0
+      }
+    })
+  }
+
+  // Apply date sorting if active
+  if (dateSortOrder) {
+    allItems = [...allItems].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime()
+      const dateB = new Date(b.created_at).getTime()
+      if (dateSortOrder === 'asc') {
+        return dateA - dateB
+      } else {
+        return dateB - dateA
       }
     })
   }
@@ -299,7 +325,16 @@ export default function Home() {
                 </div>
               </th>
               <th>Created by</th>
-              <th>Date</th>
+              <th>
+                <div className="th-with-sort">
+                  Date
+                  <button className="sort-btn" onClick={toggleDateSort} title="Sort by date">
+                    {dateSortOrder === null && '⇅'}
+                    {dateSortOrder === 'asc' && '↑'}
+                    {dateSortOrder === 'desc' && '↓'}
+                  </button>
+                </div>
+              </th>
               <th>File size</th>
               <th></th>
             </tr>

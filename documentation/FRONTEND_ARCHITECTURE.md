@@ -1,4 +1,4 @@
-# 🎨 Frontend Architecture Documentation
+# Frontend Architecture Documentation
 
 ## Overview
 
@@ -53,7 +53,7 @@ The frontend is built with **Next.js 14** using the **App Router** architecture,
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 frontend/
@@ -79,7 +79,7 @@ frontend/
 
 ---
 
-## 🏗️ Component Architecture
+## Component Architecture
 
 ### Component Hierarchy
 
@@ -125,7 +125,7 @@ frontend/
 
 ---
 
-## 🔄 State Management
+## State Management
 
 ### Main Page State
 
@@ -189,7 +189,7 @@ User Action
 
 ---
 
-## 🔌 API Communication
+## API Communication
 
 ### API Call Pattern
 
@@ -242,7 +242,7 @@ const searchDocuments = async (query: string) => {
 
 ---
 
-## 🎨 Component Details
+## Component Details
 
 ### 1. AddFolderModal
 
@@ -321,7 +321,7 @@ interface DeleteConfirmModalProps {
 
 ---
 
-## 📱 User Interactions & Flow
+## User Interactions & Flow
 
 ### Folder Navigation Flow
 
@@ -389,7 +389,7 @@ interface DeleteConfirmModalProps {
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 ### 1. Real-time UI Updates
 - After creating folder/document, list refreshes automatically
@@ -418,7 +418,7 @@ interface DeleteConfirmModalProps {
 
 ---
 
-## 🎨 Styling Architecture
+## Styling Architecture
 
 ### SCSS Structure
 
@@ -453,7 +453,7 @@ $background: #f5f7fa
 
 ---
 
-## 🧪 Component Props & Interfaces
+## Component Props & Interfaces
 
 ### TypeScript Interfaces
 
@@ -478,7 +478,7 @@ interface Document {
 
 ---
 
-## 📊 Data Flow Diagram
+## Data Flow Diagram
 
 ```
 ┌─────────────────┐
@@ -516,22 +516,22 @@ interface Document {
 
 ---
 
-## ✅ Frontend Best Practices
+## Frontend Best Practices
 
-- ✅ **Component-based architecture** - Reusable, modular components
-- ✅ **TypeScript** - Type safety throughout
-- ✅ **State management** - Centralized in main page component
-- ✅ **Error handling** - Try-catch on all API calls
-- ✅ **Loading states** - Disable buttons during submission
-- ✅ **Form validation** - Client-side + server-side
-- ✅ **Responsive design** - Works on all screen sizes
-- ✅ **Clean code** - Consistent formatting, meaningful names
-- ✅ **SCSS organization** - Global styles, scoped components
-- ✅ **Accessibility** - Semantic HTML, ARIA labels
+- **Component-based architecture** - Reusable, modular components
+- **TypeScript** - Type safety throughout
+- **State management** - Centralized in main page component
+- **Error handling** - Try-catch on all API calls
+- **Loading states** - Disable buttons during submission
+- **Form validation** - Client-side + server-side
+- **Responsive design** - Works on all screen sizes
+- **Clean code** - Consistent formatting, meaningful names
+- **SCSS organization** - Global styles, scoped components
+- **Accessibility** - Semantic HTML, ARIA labels
 
 ---
 
-## 🔧 Next.js App Router Features Used
+## Next.js App Router Features Used
 
 1. **Server Components** (default) - Optimized performance
 2. **Client Components** (`'use client'`) - For interactivity
@@ -542,7 +542,7 @@ interface Document {
 
 ---
 
-## 🚀 Performance Optimizations
+## Performance Optimizations
 
 - **Pagination** - Only 10 items shown at once
 - **Debounced search** - Could be added to reduce API calls

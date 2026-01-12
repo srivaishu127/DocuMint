@@ -1,4 +1,4 @@
-# 🏗️ Backend Architecture Documentation# 🏗️ Backend Architecture Documentation
+# Backend Architecture Documentation
 
 
 
@@ -104,9 +104,9 @@ This backend follows **Enterprise-Grade 4-Layer Architecture** with clear separa
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
-## 📊 Complete System Architecture Diagram
+## Complete System Architecture Diagram
 
 ```
 
@@ -981,7 +981,7 @@ export interface Document {- **Microsoft**: .NET Architecture Guides
 
 ---
 
-## 🎓 Design Patterns Used
+## Design Patterns Used
 
 1. **Layered Architecture** - Clear separation into presentation, application, business, and data layers
 2. **Repository Pattern** - DAOs act as repositories providing abstraction over data storage

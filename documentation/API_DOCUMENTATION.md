@@ -1,4 +1,4 @@
-# 📡 API Documentation
+# API Documentation
 
 Complete reference for all backend API endpoints.
 
@@ -6,7 +6,7 @@ Complete reference for all backend API endpoints.
 
 ---
 
-## 📁 Folders Endpoints
+## Folders Endpoints
 
 ### Get All Folders
 
@@ -95,7 +95,7 @@ Content-Type: application/json
 
 ---
 
-## 📄 Documents Endpoints
+## Documents Endpoints
 
 ### Get All Documents
 
@@ -338,7 +338,7 @@ GET /api/documents/search?q=project%20plan
 
 ---
 
-## 🧪 Testing with cURL
+## Testing with cURL
 
 ### Get All Folders
 ```bash
@@ -381,7 +381,7 @@ curl "http://localhost:3001/api/documents/search?q=report"
 
 ---
 
-## 🔐 CORS Configuration
+## CORS Configuration
 
 The API includes CORS middleware to allow cross-origin requests from the frontend.
 
@@ -391,7 +391,7 @@ The API includes CORS middleware to allow cross-origin requests from the fronten
 
 ---
 
-## 📊 HTTP Status Codes
+## HTTP Status Codes
 
 | Code | Description | Usage |
 |------|-------------|-------|
@@ -403,7 +403,7 @@ The API includes CORS middleware to allow cross-origin requests from the fronten
 
 ---
 
-## 🎯 Common Use Cases
+## Common Use Cases
 
 ### 1. Display all folders and documents on page load
 ```javascript
@@ -439,7 +439,7 @@ const results = await fetch(`http://localhost:3001/api/documents/search?q=${quer
 
 ---
 
-## 🛠️ Development Notes
+## Development Notes
 
 ### Database Connection
 - Uses connection pooling for performance
@@ -459,7 +459,7 @@ const results = await fetch(`http://localhost:3001/api/documents/search?q=${quer
 
 ---
 
-## 🔄 Future Enhancements
+## Future Enhancements
 
 Potential improvements for v2:
 - [ ] Authentication (JWT tokens)

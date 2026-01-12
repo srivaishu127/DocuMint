@@ -1,4 +1,4 @@
-# 🗄️ Database Schema Visualization
+# Database Schema Visualization
 
 ## Entity Relationship Diagram (ERD)
 
@@ -36,7 +36,7 @@
 
 ---
 
-## 📊 Visual Representation with Sample Data
+## Visual Representation with Sample Data
 
 ### FOLDERS Table (Parent)
 ```
@@ -73,7 +73,7 @@
 
 ---
 
-## 🔗 Relationship Explained
+## Relationship Explained
 
 ### One-to-Many (1:N)
 ```
@@ -102,7 +102,7 @@
 
 ---
 
-## 🔑 Key Features
+## Key Features
 
 ### Primary Keys
 - **folders.id** - Unique identifier for each folder
@@ -121,29 +121,29 @@
 
 ---
 
-## 📐 Schema Rules & Constraints
+## Schema Rules & Constraints
 
 ### FOLDERS Table Rules
 ```
-✅ Must have: id (auto-generated), name
-✅ Name cannot be empty (NOT NULL)
-✅ Created timestamp is automatic
-✅ Each folder can have 0 or many documents
+Must have: id (auto-generated), name
+Name cannot be empty (NOT NULL)
+Created timestamp is automatic
+Each folder can have 0 or many documents
 ```
 
 ### DOCUMENTS Table Rules
 ```
-✅ Must have: id, name, folder_id, file_type, size
-✅ All fields required (NOT NULL)
-✅ folder_id MUST reference an existing folder
-❌ Cannot create a document with invalid folder_id
-❌ Cannot have orphaned documents (folder must exist)
-✅ If folder is deleted, its documents are deleted too (CASCADE)
+Must have: id, name, folder_id, file_type, size
+All fields required (NOT NULL)
+folder_id MUST reference an existing folder
+Cannot create a document with invalid folder_id
+Cannot have orphaned documents (folder must exist)
+If folder is deleted, its documents are deleted too (CASCADE)
 ```
 
 ---
 
-## 💡 Real-World Example
+## Real-World Example
 
 ### Creating Data Flow:
 ```
@@ -167,7 +167,7 @@ Result: Folder AND its documents are deleted (CASCADE)
 
 ---
 
-## 🎯 Common Queries
+## Common Queries
 
 ### Get all documents with folder names
 ```sql
@@ -212,9 +212,9 @@ WHERE d.name LIKE '%report%'
 
 ---
 
-## 🏗️ Database Design Principles Used
+## Database Design Principles Used
 
-### ✅ Normalization
+### Normalization
 - No duplicate data
 - Each table has a single purpose
 - Folders and Documents are separate entities
@@ -234,7 +234,7 @@ WHERE d.name LIKE '%report%'
 
 ---
 
-## 📊 Visual Summary
+## Visual Summary
 
 ```
 Database: documents_management
@@ -253,26 +253,26 @@ Database: documents_management
 
 ---
 
-## 🎨 How This Looks in Your App
+## How This Looks in Your App
 
 ```
 Frontend Display:
-├─ 📁 Projects (folder.id = 1)
-│   ├─ 📄 Project Plan.pdf (doc.folder_id = 1)
-│   └─ 📄 Tech Spec.docx (doc.folder_id = 1)
+├─ Projects (folder.id = 1)
+│   ├─ Project Plan.pdf (doc.folder_id = 1)
+│   └─ Tech Spec.docx (doc.folder_id = 1)
 │
-├─ 📁 Reports (folder.id = 2)
-│   ├─ 📄 Budget Report.xlsx (doc.folder_id = 2)
-│   └─ 📄 Monthly Summary.pdf (doc.folder_id = 2)
+├─ Reports (folder.id = 2)
+│   ├─ Budget Report.xlsx (doc.folder_id = 2)
+│   └─ Monthly Summary.pdf (doc.folder_id = 2)
 │
-└─ 📁 Invoices (folder.id = 3)
-    ├─ 📄 Invoice_Jan.pdf (doc.folder_id = 3)
-    └─ 📄 Invoice_Feb.pdf (doc.folder_id = 3)
+└─ Invoices (folder.id = 3)
+    ├─ Invoice_Jan.pdf (doc.folder_id = 3)
+    └─ Invoice_Feb.pdf (doc.folder_id = 3)
 ```
 
 ---
 
-## 🔍 Why This Design?
+## Why This Design?
 
 **Simple & Effective:**
 - Easy to understand
@@ -293,4 +293,4 @@ Frontend Display:
 
 ---
 
-**This schema is exactly what professional document management systems use!** ✨
+**This schema is exactly what professional document management systems use!**
