@@ -10,7 +10,6 @@ interface AddFolderModalProps {
 
 interface FormData {
   name: string
-  created_by: string
 }
 
 interface FormErrors {
@@ -19,8 +18,7 @@ interface FormErrors {
 
 export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolderModalProps) {
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    created_by: ''
+    name: ''
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,16 +39,14 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     setIsSubmitting(true)
 
     try {
       const payload = {
         name: formData.name.trim(),
-        created_by: formData.created_by.trim() || 'Unknown'
+        created_by: 'Evelyn Blue'
       }
 
       const response = await fetch('http://localhost:3001/api/folders', {
@@ -62,11 +58,13 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create folder')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create folder')
       }
 
-      setFormData({ name: '', created_by: '' })
+      setFormData({
+        name: ''
+      })
       setErrors({})
       onSuccess()
       onClose()
@@ -79,7 +77,9 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
   }
 
   const handleClose = () => {
-    setFormData({ name: '', created_by: '' })
+    setFormData({
+      name: ''
+    })
     setErrors({})
     onClose()
   }
@@ -90,7 +90,7 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Folder</h2>
+          <h2>Create New Folder</h2>
           <button className="close-btn" onClick={handleClose}>&times;</button>
         </div>
 
@@ -111,24 +111,12 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
             {errors.name && <span className="error-message">{errors.name}</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="createdBy">Created By</label>
-            <input
-              id="createdBy"
-              type="text"
-              value={formData.created_by}
-              onChange={(e) => setFormData({ ...formData, created_by: e.target.value })}
-              placeholder="Enter creator name (optional)"
-              maxLength={255}
-            />
-          </div>
-
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={handleClose}>
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? 'Creating...' : 'Save Folder'}
             </button>
           </div>
         </form>

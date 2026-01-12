@@ -65,7 +65,13 @@ INSERT INTO documents (name, folder_id, file_type, size, created_by, created_at)
   ('Monthly Summary.pdf', 3, 'pdf', 3072, 'Dolly Mae', '2026-01-07 17:06:02'),
   ('Invoice_Jan.pdf', 4, 'pdf', 512, 'Barbara Hudgens', '2026-01-07 17:06:02'),
   ('Invoice_Feb.pdf', 4, 'pdf', 768, 'Desiree Roberts', '2026-01-07 17:06:02'),
-  ('Doc.pdf', 2, 'pdf', 1024, 'Ailee Lim', '2026-01-11 00:41:17');
+  ('Doc.pdf', 2, 'pdf', 1024, 'Ailee Lim', '2026-01-11 00:41:17'),
+  ('Doc2.pdf', 1, 'pdf', 1014, 'Hannah Kae', '2026-01-11 00:41:17'),
+  ('Collated_info.pdf', 1, 'pdf', 5672, 'Do Insoo', '2026-01-11 00:41:17'),
+  ('regression_testing.txt', 1, 'txt', 1234, 'Cadence Titan', '2026-01-11 00:41:17'),
+  ('Assesments.zip', 1, 'zip', 1365, 'Laila Croft', '2026-01-11 00:41:17'),
+  ('Random.pdf', 1, 'pdf', 5612, 'George Tanglin', '2026-01-11 00:41:17'),
+  ('assesment_report.xlsx', 1, 'xlsx', 5672, 'Yves Leigh', '2026-01-11 00:41:17');
 
 -- =====================================================
 -- Verify Setup

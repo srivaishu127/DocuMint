@@ -3,29 +3,26 @@
 import { useState } from 'react'
 
 //AddDocumentModal Component
-//Modal for creating new documents.
-//Documents can be added at root level (folder_id = 1) or inside specific folders.
-//The folder_id is automatically determined from the current folder context.
-//- At root level (currentFolderId === null): Uses folder_id = 1 (Root folder)
-//- Inside a folder (currentFolderId !== null): Uses the actual folder ID
+//Two-step modal for simulating document upload:
+//Step 1: Drag/drop or click to simulate file selection
+//Step 2: Fill in document details (name with auto-extracted file type, size)
+//File type is automatically extracted from the filename (e.g., "report.pdf" → "pdf")
+//Created by is hardcoded as "Evelyn Blue"
 
 interface AddDocumentModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
-  currentFolderId: number | null  // null = at root level, number = inside a folder
+  currentFolderId: number | null
 }
 
 interface FormData {
   name: string
-  file_type: string
   size: string
-  created_by: string
 }
 
 interface FormErrors {
   name?: string
-  file_type?: string
   size?: string
 }
 
@@ -37,14 +34,40 @@ export default function AddDocumentModal({
   onSuccess, 
   currentFolderId 
 }: AddDocumentModalProps) {
+  const [step, setStep] = useState<'upload' | 'form'>('upload')
+  const [isDragOver, setIsDragOver] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    file_type: '',
-    size: '',
-    created_by: ''
+    size: ''
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    setStep('form')
+  }
+
+  const handleClick = () => {
+    setStep('form')
+  }
+
+  // Extract file extension from filename
+  const getFileTypeFromName = (filename: string): string => {
+    const lastDot = filename.lastIndexOf('.')
+    if (lastDot === -1) return ''
+    return filename.substring(lastDot + 1).toLowerCase()
+  }
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -53,12 +76,14 @@ export default function AddDocumentModal({
       newErrors.name = 'Document name is required'
     } else if (formData.name.length > 255) {
       newErrors.name = 'Document name cannot exceed 255 characters'
-    }
-
-    if (!formData.file_type.trim()) {
-      newErrors.file_type = 'File type is required'
-    } else if (!VALID_FILE_TYPES.includes(formData.file_type.toLowerCase())) {
-      newErrors.file_type = `File type must be one of: ${VALID_FILE_TYPES.join(', ')}`
+    } else {
+      // Validate file extension
+      const fileType = getFileTypeFromName(formData.name.trim())
+      if (!fileType) {
+        newErrors.name = 'File name must include an extension (e.g., .pdf, .docx)'
+      } else if (!VALID_FILE_TYPES.includes(fileType)) {
+        newErrors.name = `Invalid file type. Supported types: ${VALID_FILE_TYPES.join(', ')}`
+      }
     }
 
     if (!formData.size) {
@@ -76,22 +101,19 @@ export default function AddDocumentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     setIsSubmitting(true)
 
     try {
-      // Use folder_id = 1 (Root) for root level, otherwise use the current folder ID
-      const folderId = currentFolderId !== null ? currentFolderId : 1
-
+      const fileType = getFileTypeFromName(formData.name.trim())
+      
       const payload = {
         name: formData.name.trim(),
-        folder_id: folderId,
-        file_type: formData.file_type.toLowerCase(),
+        folder_id: currentFolderId || 1,
+        file_type: fileType,
         size: Number(formData.size),
-        created_by: formData.created_by.trim() || 'Unknown'
+        created_by: 'Evelyn Blue'
       }
 
       const response = await fetch('http://localhost:3001/api/documents', {
@@ -103,17 +125,16 @@ export default function AddDocumentModal({
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create document')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create document')
       }
 
       setFormData({
         name: '',
-        file_type: '',
-        size: '',
-        created_by: ''
+        size: ''
       })
       setErrors({})
+      setStep('upload')
       onSuccess()
       onClose()
     } catch (error) {
@@ -127,11 +148,10 @@ export default function AddDocumentModal({
   const handleClose = () => {
     setFormData({
       name: '',
-      file_type: '',
-      size: '',
-      created_by: ''
+      size: ''
     })
     setErrors({})
+    setStep('upload')
     onClose()
   }
 
@@ -141,83 +161,76 @@ export default function AddDocumentModal({
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Document</h2>
+          <h2>Upload Files</h2>
           <button className="close-btn" onClick={handleClose}>&times;</button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="documentName">
-              Document Name <span className="required">*</span>
-            </label>
-            <input
-              id="documentName"
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Report.pdf"
-              className={errors.name ? 'error' : ''}
-              maxLength={255}
-            />
-            {errors.name && <span className="error-message">{errors.name}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="fileType">
-              File Type <span className="required">*</span>
-            </label>
-            <select
-              id="fileType"
-              value={formData.file_type}
-              onChange={(e) => setFormData({ ...formData, file_type: e.target.value })}
-              className={errors.file_type ? 'error' : ''}
+        {step === 'upload' ? (
+          // Step 1: Drag and Drop Area
+          <div className="upload-step">
+            <div 
+              className={`drag-drop-area ${isDragOver ? 'drag-over' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClick}
             >
-              <option value="">Select file type</option>
-              {VALID_FILE_TYPES.map(type => (
-                <option key={type} value={type}>{type.toUpperCase()}</option>
-              ))}
-            </select>
-            {errors.file_type && <span className="error-message">{errors.file_type}</span>}
-          </div>
+              <img src="/folder.png" alt="Upload" className="upload-icon-img" />
+              <p className="upload-text">Click or drag file to this area to upload</p>
+              <p className="upload-subtext">Demo: Please click to simulate file upload.</p>
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="fileSize">
-              File Size (bytes) <span className="required">*</span>
-            </label>
-            <input
-              id="fileSize"
-              type="number"
-              value={formData.size}
-              onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-              placeholder="e.g., 2048"
-              className={errors.size ? 'error' : ''}
-              min="1"
-            />
-            {errors.size && <span className="error-message">{errors.size}</span>}
-            <small className="help-text">1 KB = 1024 bytes, 1 MB = 1048576 bytes</small>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={handleClose}>
+                Cancel
+              </button>
+            </div>
           </div>
+        ) : (
+          // Step 2: Form Fields
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="documentName">
+                Document Name <span className="required">*</span>
+              </label>
+              <input
+                id="documentName"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Report.pdf"
+                className={errors.name ? 'error' : ''}
+                maxLength={255}
+              />
+              {errors.name && <span className="error-message">{errors.name}</span>}
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="createdBy">Created By</label>
-            <input
-              id="createdBy"
-              type="text"
-              value={formData.created_by}
-              onChange={(e) => setFormData({ ...formData, created_by: e.target.value })}
-              placeholder="Enter creator name (optional)"
-              maxLength={255}
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="documentSize">
+                File Size (bytes) <span className="required">*</span>
+              </label>
+              <input
+                id="documentSize"
+                type="number"
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                placeholder="e.g., 1024000"
+                className={errors.size ? 'error' : ''}
+                min="1"
+              />
+              {errors.size && <span className="error-message">{errors.size}</span>}
+            </div>
 
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={handleClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </form>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={handleClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Uploading...' : 'Upload Document'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )

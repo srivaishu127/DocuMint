@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import '../styles/globals.scss'
@@ -36,6 +36,7 @@ export default function Home() {
   const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'folder' | 'document', id: number, name: string } | null>(null)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null)
 
   useEffect(() => {
     fetchFolders()
@@ -81,21 +82,19 @@ export default function Home() {
   const handleBackToRoot = () => {
     setCurrentFolderId(null)
     setCurrentPage(1)
+    setSearchQuery('')
     fetchDocuments()
+    fetchFolders()
   }
 
-  const handleSearch = async () => {
-    if (searchQuery.length < 2) {
-      fetchDocuments()
-      return
-    }
-    try {
-      const response = await fetch(`${API_URL}/documents/search?query=${encodeURIComponent(searchQuery)}`)
-      const data = await response.json()
-      setDocuments(data)
-    } catch (error) {
-      console.error('Error searching:', error)
-    }
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('')
+    setCurrentPage(1)
   }
 
   const formatFileSize = (bytes: number) => {
@@ -162,13 +161,57 @@ export default function Home() {
     }
   }
 
+  const toggleSort = () => {
+    if (sortOrder === null) {
+      setSortOrder('asc')
+    } else if (sortOrder === 'asc') {
+      setSortOrder('desc')
+    } else {
+      setSortOrder(null)
+    }
+  }
+
   // Show folders only at root level, documents only when inside a folder
-  const allItems = currentFolderId === null
+  let allItems = currentFolderId === null
     ? [
         ...folders.filter(f => f.id !== 1).map(f => ({ ...f, type: 'folder' })),
         ...documents.filter(d => d.folder_id === 1).map(d => ({ ...d, type: 'document' }))
       ]
     : [...documents.map(d => ({ ...d, type: 'document' }))]
+
+  // Apply search filter - search across ALL folders and documents
+  if (searchQuery.trim().length > 0) {
+    const query = searchQuery.toLowerCase().trim()
+    // Search in all folders (except Root)
+    const matchedFolders = folders
+      .filter(f => f.id !== 1)
+      .filter(f => 
+        f.name.toLowerCase().includes(query) ||
+        (f.created_by && f.created_by.toLowerCase().includes(query))
+      )
+      .map(f => ({ ...f, type: 'folder' }))
+    
+    // Search in all documents (all folders)
+    const matchedDocuments = documents.filter(d => 
+      d.name.toLowerCase().includes(query) ||
+      (d.created_by && d.created_by.toLowerCase().includes(query))
+    ).map(d => ({ ...d, type: 'document' }))
+
+    allItems = [...matchedFolders, ...matchedDocuments]
+  }
+
+  // Apply sorting if active
+  if (sortOrder) {
+    allItems = [...allItems].sort((a, b) => {
+      const nameA = a.name.toLowerCase()
+      const nameB = b.name.toLowerCase()
+      if (sortOrder === 'asc') {
+        return nameA < nameB ? -1 : nameA > nameB ? 1 : 0
+      } else {
+        return nameA > nameB ? -1 : nameA < nameB ? 1 : 0
+      }
+    })
+  }
     
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
@@ -179,41 +222,79 @@ export default function Home() {
 
   return (
     <div className="container">
-      <div className="header">
-        <h1>Documents {currentFolder && `/ ${currentFolder.name}`}</h1>
+      <div className="app-header">
+        <div className="logo-section">
+          <img 
+            src="/documint-logo.png" 
+            alt="DocuMint - Your document management tool" 
+            className="logo-image"
+          />
+        </div>
         <div className="header-actions">
           {currentFolderId && (
-            <button className="btn-secondary" onClick={handleBackToRoot}>← Back</button>
+            <button className="btn-back" onClick={handleBackToRoot}>
+              ← Back
+            </button>
           )}
-          <button className="btn-secondary" onClick={() => setIsAddDocumentModalOpen(true)}>
-            📤 Upload files
+          <button className="btn-upload" onClick={() => setIsAddDocumentModalOpen(true)}>
+            <img src="/upload.png" alt="Upload" className="btn-icon" />
+            Upload Files
           </button>
           {!currentFolderId && (
-            <button className="btn-primary" onClick={() => setIsAddFolderModalOpen(true)}>
-              + Add new folder
+            <button className="btn-create-folder" onClick={() => setIsAddFolderModalOpen(true)}>
+              <img src="/add.png" alt="Add Folder" className="btn-icon" />
+              Create a folder
             </button>
           )}
         </div>
       </div>
 
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <button onClick={handleSearch}></button>
+      <div className="search-section">
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              onClick={clearSearch} 
+              className="clear-search-btn"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <div className="breadcrumb">
+          {currentFolderId ? (
+            <>
+              <span style={{ cursor: 'pointer', opacity: 0.8 }} onClick={handleBackToRoot}>Documents</span>
+              <span> / {currentFolder?.name}</span>
+            </>
+          ) : (
+            'Documents/'
+          )}
+        </div>
       </div>
 
       <div className="table-container">
         <table className="document-table">
           <thead>
             <tr>
-              <th>📄 Name ↕️</th>
+              <th>
+                <div className="th-with-sort">
+                  Name
+                  <button className="sort-btn" onClick={toggleSort} title="Sort alphabetically">
+                    {sortOrder === null && '⇅'}
+                    {sortOrder === 'asc' && '↑'}
+                    {sortOrder === 'desc' && '↓'}
+                  </button>
+                </div>
+              </th>
               <th>Created by</th>
-              <th>Date ↕️</th>
+              <th>Date</th>
               <th>File size</th>
               <th></th>
             </tr>
@@ -231,7 +312,11 @@ export default function Home() {
                     onClick={() => isFolder && handleFolderClick(itemId)}
                     style={{ cursor: isFolder ? 'pointer' : 'default' }}
                   >
-                    <span className="icon">{isFolder ? '📁' : '📄'}</span>
+                    <img 
+                      src={isFolder ? '/folder.png' : '/doc.png'} 
+                      alt={isFolder ? 'Folder' : 'Document'} 
+                      className="item-icon"
+                    />
                     {itemName}
                   </td>
                   <td>{item.created_by || 'Unknown'}</td>
@@ -243,7 +328,7 @@ export default function Home() {
                       onClick={() => handleDeleteClick(isFolder ? 'folder' : 'document', itemId, itemName)}
                       title={`Delete ${itemName}`}
                     >
-                      🗑️
+                      <img src="/delete.png" alt="Delete" className="delete-icon" />
                     </button>
                   </td>
                 </tr>
@@ -255,23 +340,72 @@ export default function Home() {
 
       <div className="pagination">
         <div className="pagination-info">
-          Show {itemsPerPage} rows per page
+          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, allItems.length)} of {allItems.length} items
         </div>
         <div className="pagination-controls">
-          <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
-            
+          <button 
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+            disabled={currentPage === 1}
+            className="pagination-arrow"
+          >
+            ←
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              className={currentPage === page ? 'active' : ''}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </button>
-          ))}
-          <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
+          {(() => {
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
             
+            if (endPage - startPage + 1 < maxPagesToShow) {
+              startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            
+            const pages = [];
+            
+            // First page
+            if (startPage > 1) {
+              pages.push(
+                <button key={1} onClick={() => setCurrentPage(1)}>
+                  1
+                </button>
+              );
+              if (startPage > 2) {
+                pages.push(<span key="dots1" className="pagination-dots">...</span>);
+              }
+            }
+            
+            // Middle pages
+            for (let i = startPage; i <= endPage; i++) {
+              pages.push(
+                <button
+                  key={i}
+                  className={currentPage === i ? 'active' : ''}
+                  onClick={() => setCurrentPage(i)}
+                >
+                  {i}
+                </button>
+              );
+            }
+            
+            // Last page
+            if (endPage < totalPages) {
+              if (endPage < totalPages - 1) {
+                pages.push(<span key="dots2" className="pagination-dots">...</span>);
+              }
+              pages.push(
+                <button key={totalPages} onClick={() => setCurrentPage(totalPages)}>
+                  {totalPages}
+                </button>
+              );
+            }
+            
+            return pages;
+          })()}
+          <button 
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
+            disabled={currentPage === totalPages}
+            className="pagination-arrow"
+          >
+            →
           </button>
         </div>
       </div>
