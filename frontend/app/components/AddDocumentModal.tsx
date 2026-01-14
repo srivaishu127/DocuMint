@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 //AddDocumentModal Component
 //Two-step modal for simulating document upload:
@@ -14,34 +14,54 @@ interface AddDocumentModalProps {
   onClose: () => void
   onSuccess: () => void
   currentFolderId: number | null
+  existingDocumentNames?: string[]
 }
 
 interface FormData {
   name: string
-  size: string
 }
 
 interface FormErrors {
   name?: string
-  size?: string
 }
 
-const VALID_FILE_TYPES = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'jpg', 'png', 'zip']
+const VALID_FILE_TYPES = [
+  // Documents
+  'pdf','doc','docx','txt','rtf','odt','html','htm',
+  // Images
+  'jpg','jpeg','png','gif','bmp','tiff',
+  // Spreadsheets
+  'xls','xlsx','csv',
+  // Presentations
+  'ppt','pptx','pps','key',
+  // Audio / Video
+  'mp3','mp4','m4a','ogg','wav','webm',
+  // Compressed / Other
+  'zip','7z','rar','json','xml','md'
+]
 
 export default function AddDocumentModal({ 
   isOpen, 
   onClose, 
   onSuccess, 
   currentFolderId 
+  , existingDocumentNames = []
 }: AddDocumentModalProps) {
   const [step, setStep] = useState<'upload' | 'form'>('upload')
   const [isDragOver, setIsDragOver] = useState(false)
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    size: ''
+    name: ''
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [pendingFile, setPendingFile] = useState<{
+    name: string
+    file_type: string
+    size: number
+    created_by: string
+  } | null>(null)
+  const [progressPercent, setProgressPercent] = useState(0)
+  const progressAnimRef = useRef<number | null>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -84,44 +104,105 @@ export default function AddDocumentModal({
       } else if (!VALID_FILE_TYPES.includes(fileType)) {
         newErrors.name = `Invalid file type. Supported types: ${VALID_FILE_TYPES.join(', ')}`
       }
+      // Duplicate check: enforce unique name within the current folder/root
+      const normalized = formData.name.trim().toLowerCase()
+      if (existingDocumentNames.map(n => n.toLowerCase()).includes(normalized)) {
+        newErrors.name = 'A document with this name already exists in the current location'
+      }
     }
 
-    if (!formData.size) {
-      newErrors.size = 'File size is required'
-    } else if (isNaN(Number(formData.size)) || Number(formData.size) <= 0) {
-      newErrors.size = 'File size must be a positive number'
-    } else if (Number(formData.size) > 100 * 1024 * 1024) {
-      newErrors.size = 'File size cannot exceed 100 MB'
-    }
+    // File size will be auto-generated on submit (random between 1 KB and 100 MB)
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) return
 
-    setIsSubmitting(true)
+    // Prepare pseudo-uploaded file and return to upload step for final Save
+    const fileType = getFileTypeFromName(formData.name.trim())
 
+    // Generate a random file size between 1 KB and 100 MB (in bytes)
+    const MIN_SIZE = 1024 // 1 KB
+    const MAX_SIZE = 100 * 1024 * 1024 // 100 MB
+    const generatedSize = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE + 1)) + MIN_SIZE
+
+    const CREATORS = [
+      'Evelyn Blue',
+      'Thomas Hardin',
+      "Clara D'souza"
+    ]
+    const createdBy = CREATORS[Math.floor(Math.random() * CREATORS.length)]
+
+    setPendingFile({
+      name: formData.name.trim(),
+      file_type: fileType,
+      size: generatedSize,
+      created_by: createdBy
+    })
+
+    // Clear form and go back to upload step to show preview
+    setFormData({ name: '' })
+    setErrors({})
+    setStep('upload')
+  }
+
+  useEffect(() => {
+    // animate progress from 0 -> 100 when pendingFile appears
+    if (!pendingFile) {
+      setProgressPercent(0)
+      if (progressAnimRef.current) {
+        cancelAnimationFrame(progressAnimRef.current)
+        progressAnimRef.current = null
+      }
+      return
+    }
+
+    setProgressPercent(0)
+    const duration = 800 // ms
+    let start: number | null = null
+
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp
+      const elapsed = timestamp - start
+      const pct = Math.min(100, (elapsed / duration) * 100)
+      setProgressPercent(pct)
+      if (elapsed < duration) {
+        progressAnimRef.current = requestAnimationFrame(step)
+      } else {
+        progressAnimRef.current = null
+      }
+    }
+
+    progressAnimRef.current = requestAnimationFrame(step)
+
+    return () => {
+      if (progressAnimRef.current) {
+        cancelAnimationFrame(progressAnimRef.current)
+        progressAnimRef.current = null
+      }
+    }
+  }, [pendingFile])
+
+  const handleSavePending = async () => {
+    if (!pendingFile) return
+    setIsSubmitting(true)
     try {
-      const fileType = getFileTypeFromName(formData.name.trim())
-      
       const payload = {
-        name: formData.name.trim(),
+        name: pendingFile.name,
         folder_id: currentFolderId || 1,
-        file_type: fileType,
-        size: Number(formData.size),
-        created_by: 'Evelyn Blue'
+        file_type: pendingFile.file_type,
+        size: pendingFile.size,
+        created_by: pendingFile.created_by
       }
 
       const response = await fetch('http://localhost:3001/api/documents', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
@@ -129,31 +210,46 @@ export default function AddDocumentModal({
         throw new Error(errorData.error || 'Failed to create document')
       }
 
-      setFormData({
-        name: '',
-        size: ''
-      })
-      setErrors({})
-      setStep('upload')
+      setPendingFile(null)
       onSuccess()
       onClose()
-    } catch (error) {
-      console.error('Error creating document:', error)
-      setErrors({ name: error instanceof Error ? error.message : 'Failed to create document' })
+    } catch (err) {
+      console.error('Error saving document:', err)
+      // show basic error
+      setErrors({ name: err instanceof Error ? err.message : 'Failed to save document' })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleClose = () => {
-    setFormData({
-      name: '',
-      size: ''
-    })
+    // clear pending preview and reset progress animation
+    setFormData({ name: '' })
     setErrors({})
     setStep('upload')
+    setPendingFile(null)
+    setProgressPercent(0)
+    if (progressAnimRef.current) {
+      cancelAnimationFrame(progressAnimRef.current)
+      progressAnimRef.current = null
+    }
     onClose()
   }
+
+  // Ensure modal internal state is reset when parent closes the modal
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ name: '' })
+      setErrors({})
+      setStep('upload')
+      setPendingFile(null)
+      setProgressPercent(0)
+      if (progressAnimRef.current) {
+        cancelAnimationFrame(progressAnimRef.current)
+        progressAnimRef.current = null
+      }
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -180,10 +276,37 @@ export default function AddDocumentModal({
               <p className="upload-subtext">Demo: Please click to simulate file upload.</p>
             </div>
 
+            {pendingFile && (
+              <div className="file-preview-row" style={{ marginTop: '1rem' }}>
+                <div className="file-row-inner">
+                  <div className="file-icon"> 
+                    <img src="/doc.png" alt="file" style={{ width: 28, height: 28 }} />
+                  </div>
+                  <div className="file-info">
+                    <div className="file-name">{pendingFile.name}</div>
+                    <div className="file-meta">{(pendingFile.size / (1024*1024)).toFixed(2)} MB</div>
+                    <div className="progress-bar">
+                      <div className="progress" style={{ width: `${progressPercent}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="file-actions">
+                    <button className="btn-close" onClick={() => setPendingFile(null)} aria-label="Remove">×</button>
+                  </div>
+                </div>
+              
+              <div style={{ height: 12 }} />
+              </div>
+            )}
+
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={handleClose}>
-                Cancel
+                Close
               </button>
+              {pendingFile && (
+                <button type="button" className="btn-primary" onClick={handleSavePending} disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -205,28 +328,14 @@ export default function AddDocumentModal({
               {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="documentSize">
-                File Size (bytes) <span className="required">*</span>
-              </label>
-              <input
-                id="documentSize"
-                type="number"
-                value={formData.size}
-                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                placeholder="e.g., 1024000"
-                className={errors.size ? 'error' : ''}
-                min="1"
-              />
-              {errors.size && <span className="error-message">{errors.size}</span>}
-            </div>
+            {/* File size is generated automatically on submit (random value within limits) */}
 
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={handleClose}>
                 Cancel
               </button>
               <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Uploading...' : 'Upload Document'}
+                {isSubmitting ? 'Uploading...' : 'Upload'}
               </button>
             </div>
           </form>

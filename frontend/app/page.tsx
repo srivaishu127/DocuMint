@@ -262,11 +262,6 @@ export default function Home() {
           />
         </div>
         <div className="header-actions">
-          {currentFolderId && (
-            <button className="btn-back" onClick={handleBackToRoot}>
-              ← Back
-            </button>
-          )}
           <button className="btn-upload" onClick={() => setIsAddDocumentModalOpen(true)}>
             <img src="/upload.png" alt="Upload" className="btn-icon" />
             Upload Files
@@ -300,10 +295,11 @@ export default function Home() {
         </div>
         <div className="breadcrumb">
           {currentFolderId ? (
-            <>
-              <span style={{ cursor: 'pointer', opacity: 0.8 }} onClick={handleBackToRoot}>Documents</span>
+            <div className="breadcrumb-row">
+              <button className="btn-back btn-back-small" onClick={handleBackToRoot} aria-label="Back to Documents">←</button>
+              <span className="breadcrumb-link" style={{ cursor: 'pointer', opacity: 0.8 }} onClick={handleBackToRoot}>Documents</span>
               <span> / {currentFolder?.name}</span>
-            </>
+            </div>
           ) : (
             'Documents/'
           )}
@@ -311,6 +307,13 @@ export default function Home() {
       </div>
 
       <div className="table-container">
+        {allItems.length === 0 ? (
+          <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: 'white' }}>
+            <h3 style={{ marginBottom: '0.5rem' }}>No documents yet — upload your file first</h3>
+            <p style={{ marginBottom: '1rem', opacity: 0.85 }}>You don't have any documents in this location. Click below to add your first file.</p>
+            <button className="btn-primary" onClick={() => setIsAddDocumentModalOpen(true)}>Upload File</button>
+          </div>
+        ) : (
         <table className="document-table">
           <thead>
             <tr>
@@ -376,6 +379,7 @@ export default function Home() {
             })}
           </tbody>
         </table>
+        )}
       </div>
 
       <div className="pagination">
@@ -454,6 +458,7 @@ export default function Home() {
         isOpen={isAddFolderModalOpen}
         onClose={() => setIsAddFolderModalOpen(false)}
         onSuccess={handleFolderSuccess}
+        existingFolderNames={folders.filter(f => f.id !== 1).map(f => f.name.toLowerCase())}
       />
 
       <AddDocumentModal 
@@ -461,6 +466,11 @@ export default function Home() {
         onClose={() => setIsAddDocumentModalOpen(false)}
         onSuccess={handleDocumentSuccess}
         currentFolderId={currentFolderId}
+        existingDocumentNames={
+          currentFolderId === null
+            ? documents.filter(d => d.folder_id === 1).map(d => d.name.toLowerCase())
+            : documents.filter(d => d.folder_id === currentFolderId).map(d => d.name.toLowerCase())
+        }
       />
 
       <DeleteConfirmModal 

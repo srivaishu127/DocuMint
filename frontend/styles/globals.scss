@@ -171,6 +171,104 @@ body {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Breadcrumb row with small back button */
+.breadcrumb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-back-small {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.6);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  height: 30px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.btn-back-small:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+
+.empty-state {
+  background: rgba(11, 43, 1, 0.5);
+  border-radius: 12px;
+}
+
+.pending-file-preview {
+  color: #ffffff;
+}
+
+.file-preview-row {
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 1rem;
+}
+
+.file-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.file-meta {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.progress-bar {
+  background: rgba(255,255,255,0.06);
+  height: 6px;
+  border-radius: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress {
+  background: #a3e635; /* lime green */
+  height: 100%;
+  width: 0%;
+  transition: width 0.2s linear;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.9);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
 /* Table with Green Theme */
 .table-container {
   background: rgba(45, 80, 22, 0.5);
@@ -530,10 +628,11 @@ form {
   .modal-actions {
     display: flex;
     gap: 0.75rem;
-    justify-content: flex-end;
-    padding-top: 1rem;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem;
     border-top: 1px solid rgba(127, 176, 105, 0.2);
-    margin-top: 1.5rem;
+    margin-top: 1.75rem;
 
     button {
       &:disabled {
@@ -542,6 +641,19 @@ form {
       }
     }
   }
+}
+
+/* Align Save to the right inside modal actions */
+.modal-actions .btn-primary {
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+/* Add extra gap between Close (secondary) and Save (primary) */
+.modal-actions .btn-secondary {
+  margin-right: 10.5rem;
 }
 
 /* Upload Step - Drag and Drop Area - Dark Green Theme */

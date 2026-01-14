@@ -10,6 +10,7 @@ interface AddFolderModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  existingFolderNames?: string[]
 }
 
 interface FormData {
@@ -20,7 +21,7 @@ interface FormErrors {
   name?: string
 }
 
-export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolderModalProps) {
+export default function AddFolderModal({ isOpen, onClose, onSuccess, existingFolderNames = [] }: AddFolderModalProps) {
   const [formData, setFormData] = useState<FormData>({
     name: ''
   })
@@ -36,6 +37,12 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
       newErrors.name = 'Folder name cannot exceed 255 characters'
     }
 
+    // Duplicate folder name check (global among displayed folders)
+    const normalized = formData.name.trim().toLowerCase()
+    if (existingFolderNames.map(n => n.toLowerCase()).includes(normalized)) {
+      newErrors.name = 'A folder with this name already exists'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -48,9 +55,16 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
     setIsSubmitting(true)
 
     try {
+      const CREATORS = [
+        'Evelyn Blue',
+        'Thomas Hardin',
+        "Clara D'souza"
+      ]
+      const createdBy = CREATORS[Math.floor(Math.random() * CREATORS.length)]
+
       const payload = {
         name: formData.name.trim(),
-        created_by: 'Evelyn Blue'
+        created_by: createdBy
       }
 
       const response = await fetch('http://localhost:3001/api/folders', {
@@ -120,7 +134,7 @@ export default function AddFolderModal({ isOpen, onClose, onSuccess }: AddFolder
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Save Folder'}
+              {isSubmitting ? 'Creating...' : 'Save'}
             </button>
           </div>
         </form>
