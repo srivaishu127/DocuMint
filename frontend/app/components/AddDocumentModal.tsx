@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 
 //AddDocumentModal Component
-//Two-step modal for simulating document upload:
-//Step 1: Drag/drop or click to simulate file selection
+//Multi-file upload modal:
+//Step 1: Drag/drop or click to simulate file selection (can add multiple files)
 //Step 2: Fill in document details (name with auto-extracted file type, size)
-//File type is automatically extracted from the filename (e.g., "report.pdf" → "pdf")
-//Created by is hardcoded as "Evelyn Blue"
+//Files stack vertically with individual progress bars and remove buttons
+//When Save is pressed, all files are uploaded in batch
 
 interface AddDocumentModalProps {
   isOpen: boolean
@@ -15,6 +15,15 @@ interface AddDocumentModalProps {
   onSuccess: () => void
   currentFolderId: number | null
   existingDocumentNames?: string[]
+}
+
+interface PendingFile {
+  id: string
+  name: string
+  file_type: string
+  size: number
+  created_by: string
+  progress: number
 }
 
 interface FormData {
@@ -54,14 +63,8 @@ export default function AddDocumentModal({
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [pendingFile, setPendingFile] = useState<{
-    name: string
-    file_type: string
-    size: number
-    created_by: string
-  } | null>(null)
-  const [progressPercent, setProgressPercent] = useState(0)
-  const progressAnimRef = useRef<number | null>(null)
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
+  const progressAnimRefs = useRef<Map<string, number>>(new Map())
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -104,14 +107,13 @@ export default function AddDocumentModal({
       } else if (!VALID_FILE_TYPES.includes(fileType)) {
         newErrors.name = `Invalid file type. Supported types: ${VALID_FILE_TYPES.join(', ')}`
       }
-      // Duplicate check: enforce unique name within the current folder/root
+      // Duplicate check: enforce unique name within the current folder/root and pending files
       const normalized = formData.name.trim().toLowerCase()
-      if (existingDocumentNames.map(n => n.toLowerCase()).includes(normalized)) {
-        newErrors.name = 'A document with this name already exists in the current location'
+      const allNames = [...existingDocumentNames, ...pendingFiles.map(f => f.name)]
+      if (allNames.map(n => n.toLowerCase()).includes(normalized)) {
+        newErrors.name = 'A document with this name already exists or is already queued for upload'
       }
     }
-
-    // File size will be auto-generated on submit (random between 1 KB and 100 MB)
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -122,7 +124,7 @@ export default function AddDocumentModal({
 
     if (!validateForm()) return
 
-    // Prepare pseudo-uploaded file and return to upload step for final Save
+    // Prepare pseudo-uploaded file and add to pending files list
     const fileType = getFileTypeFromName(formData.name.trim())
 
     // Generate a random file size between 1 KB and 100 MB (in bytes)
@@ -137,31 +139,27 @@ export default function AddDocumentModal({
     ]
     const createdBy = CREATORS[Math.floor(Math.random() * CREATORS.length)]
 
-    setPendingFile({
+    const newFile: PendingFile = {
+      id: Date.now().toString() + Math.random(),
       name: formData.name.trim(),
       file_type: fileType,
       size: generatedSize,
-      created_by: createdBy
-    })
+      created_by: createdBy,
+      progress: 0
+    }
+
+    setPendingFiles(prev => [...prev, newFile])
 
     // Clear form and go back to upload step to show preview
     setFormData({ name: '' })
     setErrors({})
     setStep('upload')
+
+    // Animate progress for this file
+    animateFileProgress(newFile.id)
   }
 
-  useEffect(() => {
-    // animate progress from 0 -> 100 when pendingFile appears
-    if (!pendingFile) {
-      setProgressPercent(0)
-      if (progressAnimRef.current) {
-        cancelAnimationFrame(progressAnimRef.current)
-        progressAnimRef.current = null
-      }
-      return
-    }
-
-    setProgressPercent(0)
+  const animateFileProgress = (fileId: string) => {
     const duration = 800 // ms
     let start: number | null = null
 
@@ -169,85 +167,101 @@ export default function AddDocumentModal({
       if (!start) start = timestamp
       const elapsed = timestamp - start
       const pct = Math.min(100, (elapsed / duration) * 100)
-      setProgressPercent(pct)
+      
+      setPendingFiles(prev => 
+        prev.map(f => f.id === fileId ? { ...f, progress: pct } : f)
+      )
+
       if (elapsed < duration) {
-        progressAnimRef.current = requestAnimationFrame(step)
+        const animId = requestAnimationFrame(step)
+        progressAnimRefs.current.set(fileId, animId)
       } else {
-        progressAnimRef.current = null
+        progressAnimRefs.current.delete(fileId)
       }
     }
 
-    progressAnimRef.current = requestAnimationFrame(step)
+    const animId = requestAnimationFrame(step)
+    progressAnimRefs.current.set(fileId, animId)
+  }
 
-    return () => {
-      if (progressAnimRef.current) {
-        cancelAnimationFrame(progressAnimRef.current)
-        progressAnimRef.current = null
-      }
+  const removeFile = (fileId: string) => {
+    // Cancel animation if running
+    const animId = progressAnimRefs.current.get(fileId)
+    if (animId) {
+      cancelAnimationFrame(animId)
+      progressAnimRefs.current.delete(fileId)
     }
-  }, [pendingFile])
+    
+    setPendingFiles(prev => prev.filter(f => f.id !== fileId))
+  }
 
-  const handleSavePending = async () => {
-    if (!pendingFile) return
+  const handleSaveAll = async () => {
+    if (pendingFiles.length === 0) return
     setIsSubmitting(true)
+    
     try {
-      const payload = {
-        name: pendingFile.name,
-        folder_id: currentFolderId || 1,
-        file_type: pendingFile.file_type,
-        size: pendingFile.size,
-        created_by: pendingFile.created_by
-      }
+      // Upload all files in batch
+      const uploadPromises = pendingFiles.map(file => {
+        const payload = {
+          name: file.name,
+          folder_id: currentFolderId || 1,
+          file_type: file.file_type,
+          size: file.size,
+          created_by: file.created_by
+        }
 
-      const response = await fetch('http://localhost:3001/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        return fetch('http://localhost:3001/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(response => {
+          if (!response.ok) {
+            return response.json().then(errorData => {
+              throw new Error(errorData.error || `Failed to upload ${file.name}`)
+            })
+          }
+          return response.json()
+        })
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create document')
-      }
+      await Promise.all(uploadPromises)
 
-      setPendingFile(null)
+      // Clear all pending files and close
+      setPendingFiles([])
       onSuccess()
       onClose()
     } catch (err) {
-      console.error('Error saving document:', err)
-      // show basic error
-      setErrors({ name: err instanceof Error ? err.message : 'Failed to save document' })
+      console.error('Error saving documents:', err)
+      setErrors({ name: err instanceof Error ? err.message : 'Failed to save one or more documents' })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleClose = () => {
-    // clear pending preview and reset progress animation
+    // Cancel all running animations
+    progressAnimRefs.current.forEach(animId => cancelAnimationFrame(animId))
+    progressAnimRefs.current.clear()
+    
+    // clear pending preview and reset
     setFormData({ name: '' })
     setErrors({})
     setStep('upload')
-    setPendingFile(null)
-    setProgressPercent(0)
-    if (progressAnimRef.current) {
-      cancelAnimationFrame(progressAnimRef.current)
-      progressAnimRef.current = null
-    }
+    setPendingFiles([])
     onClose()
   }
 
   // Ensure modal internal state is reset when parent closes the modal
   useEffect(() => {
     if (!isOpen) {
+      // Cancel all running animations
+      progressAnimRefs.current.forEach(animId => cancelAnimationFrame(animId))
+      progressAnimRefs.current.clear()
+      
       setFormData({ name: '' })
       setErrors({})
       setStep('upload')
-      setPendingFile(null)
-      setProgressPercent(0)
-      if (progressAnimRef.current) {
-        cancelAnimationFrame(progressAnimRef.current)
-        progressAnimRef.current = null
-      }
+      setPendingFiles([])
     }
   }, [isOpen])
 
@@ -273,38 +287,44 @@ export default function AddDocumentModal({
             >
               <img src="/folder.png" alt="Upload" className="upload-icon-img" />
               <p className="upload-text">Click or drag file to this area to upload</p>
-              <p className="upload-subtext">Demo: Please click to simulate file upload.</p>
+              <p className="upload-subtext">Demo: Click to simulate addition of single/multiple files.</p>
             </div>
 
-            {pendingFile && (
-              <div className="file-preview-row" style={{ marginTop: '1rem' }}>
-                <div className="file-row-inner">
-                  <div className="file-icon"> 
-                    <img src="/doc.png" alt="file" style={{ width: 28, height: 28 }} />
-                  </div>
-                  <div className="file-info">
-                    <div className="file-name">{pendingFile.name}</div>
-                    <div className="file-meta">{(pendingFile.size / (1024*1024)).toFixed(2)} MB</div>
-                    <div className="progress-bar">
-                      <div className="progress" style={{ width: `${progressPercent}%` }}></div>
+            {pendingFiles.length > 0 ? (
+              <div className="files-preview-container">
+                {pendingFiles.map(file => (
+                  <div key={file.id} className="file-preview-row" style={{ marginBottom: '0.75rem' }}>
+                    <div className="file-row-inner">
+                      <div className="file-icon"> 
+                        <img src="/doc.png" alt="file" style={{ width: 28, height: 28 }} />
+                      </div>
+                      <div className="file-info">
+                        <div className="file-name">{file.name}</div>
+                        <div className="file-meta">{(file.size / (1024*1024)).toFixed(2)} MB</div>
+                        <div className="progress-bar">
+                          <div className="progress" style={{ width: `${file.progress}%` }}></div>
+                        </div>
+                      </div>
+                      <div className="file-actions">
+                        <button className="btn-close" onClick={() => removeFile(file.id)} aria-label="Remove">×</button>
+                      </div>
                     </div>
                   </div>
-                  <div className="file-actions">
-                    <button className="btn-close" onClick={() => setPendingFile(null)} aria-label="Remove">×</button>
-                  </div>
-                </div>
-              
-              <div style={{ height: 12 }} />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-files-state">
+                <p>No documents added</p>
               </div>
             )}
 
-            <div className="modal-actions">
+            <div className="modal-actions upload-actions">
               <button type="button" className="btn-secondary" onClick={handleClose}>
                 Close
               </button>
-              {pendingFile && (
-                <button type="button" className="btn-primary" onClick={handleSavePending} disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving...' : 'Save'}
+              {pendingFiles.length > 0 && (
+                <button type="button" className="btn-primary" onClick={handleSaveAll} disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : `Save ${pendingFiles.length > 1 ? `(${pendingFiles.length})` : ''}`}
                 </button>
               )}
             </div>

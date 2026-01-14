@@ -338,7 +338,7 @@ export default function Home() {
                   </button>
                 </div>
               </th>
-              <th>File size</th>
+              <th>Size</th>
               <th></th>
             </tr>
           </thead>
